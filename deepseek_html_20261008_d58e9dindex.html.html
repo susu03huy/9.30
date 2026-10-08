@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<title>星轨 · 今日运势</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --c1:#00e5ff;
+    --c2:#ff2e97;
+    --c3:#7c4dff;
+  }
+  html,body{min-height:100%;}
+  body{
+    font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    background:radial-gradient(ellipse at 50% -10%, #12224a 0%, #0a1024 42%, #05080f 100%);
+    color:#dff4ff;
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 20px calc(40px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* 星点 */
+  .stars{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      radial-gradient(1.6px 1.6px at 15% 10%, rgba(0,229,255,.85), transparent),
+      radial-gradient(1px 1px at 78% 6%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.3px 1.3px at 90% 30%, rgba(255,46,151,.7), transparent),
+      radial-gradient(1px 1px at 30% 38%, rgba(255,255,255,.45), transparent),
+      radial-gradient(1.5px 1.5px at 6% 62%, rgba(124,77,255,.8), transparent),
+      radial-gradient(1px 1px at 94% 76%, rgba(0,229,255,.6), transparent),
+      radial-gradient(1.2px 1.2px at 44% 92%, rgba(255,255,255,.4), transparent),
+      radial-gradient(1px 1px at 62% 48%, rgba(255,255,255,.35), transparent);
+    animation:twinkle 6s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle{from{opacity:.45}to{opacity:1}}
+
+  header{text-align:center;position:relative;z-index:1;}
+  h1{
+    font-size:clamp(21px,6.2vw,27px);
+    letter-spacing:9px;text-indent:9px;
+    font-weight:600;
+    background:linear-gradient(90deg,#00e5ff 0%,#a6f1ff 40%,#ff2e97 100%);
+    -webkit-background-clip:text;background-clip:text;
+    color:transparent;
+    filter:drop-shadow(0 0 18px rgba(0,229,255,.55));
+  }
+  .sub{
+    margin-top:9px;font-size:11.5px;letter-spacing:2.5px;
+    color:rgba(160,214,255,.5);
+  }
+
+  /* 罗盘舞台 */
+  .stage{
+    --size: min(80vw, 330px);
+    --r: calc(var(--size) * 0.375);
+    position:relative;z-index:1;
+    width:var(--size);height:var(--size);
+    margin:26px 0 30px;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* 外圈刻度 */
+  .ticks{
+    position:absolute;inset:-16px;border-radius:50%;z-index:0;
+    background:repeating-conic-gradient(from 0deg,
+      rgba(0,229,255,.55) 0deg 0.8deg,
+      transparent 0.8deg 7.5deg);
+    -webkit-mask:radial-gradient(circle, transparent 0 87%, #000 87% 100%);
+    mask:radial-gradient(circle, transparent 0 87%, #000 87% 100%);
+    animation:ticksSpin 40s linear infinite;
+  }
+  @keyframes ticksSpin{to{transform:rotate(360deg)}}
+
+  /* 呼吸层 */
+  .rotor{
+    position:absolute;inset:0;
+    animation:breathe 5s ease-in-out infinite;
+    will-change:transform;
+  }
+  @keyframes breathe{
+    0%,100%{transform:scale(.96);}
+    50%    {transform:scale(1.04);}
+  }
+
+  /* 盘面 */
+  .wheel{
+    position:absolute;inset:0;border-radius:50%;
+    transform:rotate(0deg);
+    transition:transform 4.2s cubic-bezier(.12,.72,.16,1), box-shadow .5s;
+    will-change:transform;
+    background:
+      radial-gradient(circle, rgba(0,229,255,.12) 0%, rgba(0,229,255,.03) 40%, transparent 64%),
+      conic-gradient(from -22.5deg,
+        rgba(0,229,255,.15) 0deg 45deg,
+        rgba(124,77,255,.05) 45deg 90deg,
+        rgba(0,229,255,.15) 90deg 135deg,
+        rgba(124,77,255,.05) 135deg 180deg,
+        rgba(0,229,255,.15) 180deg 225deg,
+        rgba(124,77,255,.05) 225deg 270deg,
+        rgba(0,229,255,.15) 270deg 315deg,
+        rgba(124,77,255,.05) 315deg 360deg),
+      radial-gradient(circle, #111c3e 0%, #0a1024 55%, #05080f 100%);
+    border:1px solid rgba(0,229,255,.45);
+    box-shadow:
+      0 0 30px rgba(0,229,255,.22),
+      0 0 70px rgba(124,77,255,.18),
+      inset 0 0 52px rgba(0,229,255,.10);
+  }
+  .wheel::before{
+    content:'';position:absolute;inset:12%;border-radius:50%;
+    border:1px solid rgba(124,77,255,.35);
+    box-shadow:inset 0 0 22px rgba(124,77,255,.25);
+  }
+  .wheel::after{
+    content:'';position:absolute;inset:26%;border-radius:50%;
+    border:1px dashed rgba(0,229,255,.3);
+  }
+  .wheel.spinning{
+    box-shadow:
+      0 0 55px rgba(0,229,255,.55),
+      0 0 110px rgba(255,46,151,.30),
+      inset 0 0 70px rgba(0,229,255,.28);
+  }
+
+  /* 方位文字：朝心 + 放大缩小 */
+  .dir{
+    position:absolute;left:50%;top:50%;
+    width:76px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    transform:translate(-50%,-50%)
+              rotate(calc(var(--i) * 45deg))
+              translateY(calc(-1 * var(--r)));
+    pointer-events:none;
+  }
+  .dir span{
+    display:block;white-space:nowrap;
+    font-size:clamp(12px,3.3vw,14px);
+    letter-spacing:2px;
+    color:#7fd4f0;
+    transform:rotate(180deg);
+    animation:dirPulse 2.8s ease-in-out infinite;
+    animation-delay:calc(var(--i) * -0.35s);
+    will-change:transform,opacity;
+  }
+  @keyframes dirPulse{
+    0%,100%{transform:rotate(180deg) scale(.76);opacity:.5;}
+    50%    {transform:rotate(180deg) scale(1.20);opacity:1;}
+  }
+
+  /* 命中方位：持续放大缩小 + 强发光 */
+  .dir.active span{
+    color:#ffffff;
+    animation:activePulse 1.7s ease-in-out infinite;
+  }
+  @keyframes activePulse{
+    0%,100%{transform:rotate(180deg) scale(1.22);
+            text-shadow:0 0 10px var(--c1),0 0 26px var(--c1),0 0 46px var(--c2);}
+    50%    {transform:rotate(180deg) scale(1.52);
+            text-shadow:0 0 16px #fff,0 0 38px var(--c1),0 0 70px var(--c2);}
+  }
+
+  /* 中心 */
+  .core{
+    position:absolute;left:50%;top:50%;z-index:5;
+    transform:translate(-50%,-50%);
+    width:28%;height:28%;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(18px,5.6vw,26px);
+    color:#eafcff;
+    background:radial-gradient(circle at 38% 32%, #1b2b5a, #0a1024 72%);
+    border:1px solid rgba(0,229,255,.55);
+    box-shadow:0 0 26px rgba(0,229,255,.45), inset 0 0 20px rgba(0,229,255,.25);
+    text-shadow:0 0 14px var(--c1);
+    animation:coreBreath 3.4s ease-in-out infinite;
+  }
+  @keyframes coreBreath{
+    0%,100%{transform:translate(-50%,-50%) scale(.94);}
+    50%    {transform:translate(-50%,-50%) scale(1.06);}
+  }
+  .core::after{
+    content:'';position:absolute;inset:-14px;border-radius:50%;
+    border:1px solid rgba(0,229,255,.35);
+    animation:coreRing 3s ease-out infinite;
+  }
+  @keyframes coreRing{
+    0%  {transform:scale(.82);opacity:.9;}
+    100%{transform:scale(1.45);opacity:0;}
+  }
+
+  /* 顶部指针 */
+  .pointer{
+    position:absolute;left:50%;top:-15px;z-index:6;
+    transform:translateX(-50%);
+    width:0;height:0;
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-top:22px solid var(--c1);
+    filter:drop-shadow(0 0 10px var(--c1)) drop-shadow(0 0 22px rgba(0,229,255,.6));
+  }
+  .pointer::after{
+    content:'';position:absolute;left:-5px;top:6px;
+    width:10px;height:10px;border-radius:50%;
+    background:#eafcff;
+    box-shadow:0 0 12px var(--c1);
+  }
+
+  /* 按钮 */
+  .btn{
+    position:relative;z-index:1;
+    margin-top:2px;
+    padding:15px 46px;
+    border-radius:999px;
+    border:1px solid rgba(0,229,255,.55);
+    background:linear-gradient(180deg, rgba(0,229,255,.16), rgba(124,77,255,.10));
+    color:#c8f6ff;
+    font-family:inherit;
+    font-size:15px;letter-spacing:5px;text-indent:5px;
+    cursor:pointer;
+    box-shadow:0 0 24px rgba(0,229,255,.25), inset 0 0 18px rgba(0,229,255,.10);
+    transition:transform .2s, opacity .3s, box-shadow .3s;
+  }
+  .btn:active{transform:scale(.95);box-shadow:0 0 34px rgba(0,229,255,.45);}
+  .btn:disabled{opacity:.5;}
+
+  /* 结果 */
+  .result{
+    position:relative;z-index:1;
+    width:100%;max-width:400px;
+    margin-top:30px;
+    opacity:0;transform:translateY(18px);
+    transition:opacity .8s ease, transform .8s ease;
+    pointer-events:none;
+  }
+  .result.show{opacity:1;transform:none;pointer-events:auto;}
+
+  .lv{text-align:center;padding:4px 0 22px;}
+  .lv-name{
+    font-size:clamp(36px,10.5vw,44px);
+    letter-spacing:10px;text-indent:10px;
+    font-weight:600;
+    background:linear-gradient(90deg,#00e5ff,#a6f1ff 50%,#ff2e97);
+    -webkit-background-clip:text;background-clip:text;
+    color:transparent;
+    filter:drop-shadow(0 0 22px rgba(0,229,255,.6));
+  }
+  .lv-sub{
+    margin-top:10px;font-size:11.5px;
+    letter-spacing:2.5px;color:rgba(160,214,255,.5);
+  }
+
+  .cells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .cell{
+    background:rgba(0,229,255,.05);
+    border:1px solid rgba(0,229,255,.22);
+    border-radius:12px;
+    padding:14px 6px;text-align:center;
+    box-shadow:inset 0 0 18px rgba(0,229,255,.06);
+  }
+  .cell .k{font-size:10.5px;letter-spacing:1px;color:rgba(160,214,255,.45);}
+  .cell .v{margin-top:8px;font-size:15px;letter-spacing:1px;color:#a6f1ff;text-shadow:0 0 12px rgba(0,229,255,.5);}
+
+  .rows{margin-top:12px;display:flex;flex-direction:column;gap:10px;}
+  .row{
+    display:flex;align-items:flex-start;gap:12px;
+    background:rgba(124,77,255,.06);
+    border:1px solid rgba(124,77,255,.18);
+    border-radius:12px;padding:14px 16px;
+  }
+  .tag{
+    flex:none;width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+  }
+  .tag.yi{background:rgba(0,229,255,.12);color:#6fe9ff;border:1px solid rgba(0,229,255,.35);}
+  .tag.ji{background:rgba(255,46,151,.12);color:#ff8cc6;border:1px solid rgba(255,46,151,.35);}
+  .txt{font-size:14px;line-height:1.75;color:rgba(223,244,255,.82);letter-spacing:.5px;padding-top:2px;}
+
+  .quote{
+    margin-top:22px;text-align:center;
+    font-size:13px;line-height:2;
+    color:rgba(160,214,255,.55);
+    letter-spacing:1.5px;
+  }
+  .foot{
+    margin-top:28px;font-size:11px;
+    letter-spacing:2px;color:rgba(160,214,255,.25);
+    text-align:center;position:relative;z-index:1;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<header>
+  <h1>星轨运势</h1>
+  <p class="sub" id="today">今日运势</p>
+</header>
+
+<div class="stage">
+  <div class="ticks"></div>
+
+  <div class="rotor">
+    <div class="wheel" id="wheel">
+      <div class="dir" style="--i:0"><span>北</span></div>
+      <div class="dir" style="--i:1"><span>东北</span></div>
+      <div class="dir" style="--i:2"><span>东</span></div>
+      <div class="dir" style="--i:3"><span>东南</span></div>
+      <div class="dir" style="--i:4"><span>南</span></div>
+      <div class="dir" style="--i:5"><span>西南</span></div>
+      <div class="dir" style="--i:6"><span>西</span></div>
+      <div class="dir" style="--i:7"><span>西北</span></div>
+    </div>
+  </div>
+
+  <div class="core">卜</div>
+  <div class="pointer"></div>
+</div>
+
+<button class="btn" id="btn">启 动 星 轨</button>
+
+<div class="result" id="result">
+  <div class="lv">
+    <div class="lv-name" id="lvName">大吉</div>
+    <div class="lv-sub" id="lvSub"></div>
+  </div>
+
+  <div class="cells">
+    <div class="cell"><div class="k">幸运方位</div><div class="v" id="vDir">—</div></div>
+    <div class="cell"><div class="k">幸运颜色</div><div class="v" id="vColor">—</div></div>
+    <div class="cell"><div class="k">幸运数字</div><div class="v" id="vNum">—</div></div>
+  </div>
+
+  <div class="rows">
+    <div class="row"><span class="tag yi">宜</span><span class="txt" id="vYi">—</span></div>
+    <div class="row"><span class="tag ji">忌</span><span class="txt" id="vJi">—</span></div>
+  </div>
+
+  <p class="quote" id="vQuote"></p>
+</div>
+
+<p class="foot">星轨推演 · 每日一签 · 仅供娱乐</p>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============ 数据池 ============ */
+  var DIRECTIONS = [
+    {label:'正北'},{label:'东北'},{label:'正东'},{label:'东南'},
+    {label:'正南'},{label:'西南'},{label:'正西'},{label:'西北'}
+  ];
+
+  var LEVELS = [
+    {name:'大吉', sub:'星轨顺行 · 诸事皆宜'},
+    {name:'中吉', sub:'引力相助 · 得偿所愿'},
+    {name:'小吉', sub:'微光渐亮 · 步步生花'},
+    {name:'平',   sub:'静守星轨 · 安之若素'},
+    {name:'小吉', sub:'暗流蓄势 · 好运将至'},
+    {name:'中吉', sub:'心之所向 · 皆有回响'}
+  ];
+
+  var COLORS = ['电光青','霓虹粉','星云紫','深空蓝','月银白','曜石黑','赤焰红','极光绿','琥珀金'];
+
+  var YI = ['会友','远行','独处','阅读','整理房间','运动','早睡','静心','复盘',
+            '学习新技能','断舍离','听音乐','散步','记录灵感','主动沟通','喝一杯热茶'];
+
+  var JI = ['熬夜','冲动消费','与人争执','拖延','贪凉','多言','空腹出行',
+            '久坐不动','轻信他人','反复内耗'];
+
+  var QUOTES = [
+    '星轨交错，所行皆有回响。',
+    '静水流深，不必急于一时。',
+    '微光成炬，好运藏于细微。',
+    '心之所向，即是吉方。',
+    '穿越暗夜，自有星河相照。',
+    '守得云开，方见月明。',
+    '不驰于空想，不骛于虚声。',
+    '一步一履，皆是修行。',
+    '今日之因，明日之果。',
+    '淡泊明志，宁静致远。',
+    '所求皆如愿，所行化坦途。',
+    '万物有时，静候佳音。'
+  ];
+
+  /* ============ 随机种子（同一人同一天结果固定） ============ */
+  function getSeed(){
+    var d = new Date();
+    var dayKey = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    var uid = null;
+    try { uid = localStorage.getItem('startrack_uid'); } catch(e){}
+    if(!uid){
+      uid = String(Math.floor(Math.random()*1e9));
+      try { localStorage.setItem('startrack_uid', uid); } catch(e){}
+    }
+    var s = dayKey + '|' + uid;
+    var h = 2166136261;
+    for(var i=0;i<s.length;i++){
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function pickN(arr, n, rnd){
+    var pool = arr.slice(), out = [];
+    for(var i=0;i<n && pool.length;i++){
+      var idx = Math.floor(rnd()*pool.length);
+      out.push(pool.splice(idx,1)[0]);
+    }
+    return out;
+  }
+
+  /* ============ 生成今日运势 ============ */
+  function build(){
+    var rnd = mulberry32(getSeed());
+    return {
+      dirIdx : Math.floor(rnd()*8),
+      level  : LEVELS[Math.floor(rnd()*LEVELS.length)],
+      color  : COLORS[Math.floor(rnd()*COLORS.length)],
+      num    : 1 + Math.floor(rnd()*9),
+      yi     : pickN(YI, 2, rnd),
+      ji     : pickN(JI, 1, rnd),
+      quote  : QUOTES[Math.floor(rnd()*QUOTES.length)]
+    };
+  }
+
+  /* ============ DOM ============ */
+  var wheel    = document.getElementById('wheel');
+  var btn      = document.getElementById('btn');
+  var resultEl = document.getElementById('result');
+  var dirEls   = wheel.querySelectorAll('.dir');
+
+  var data     = build();
+  var rotation = 0;
+  var busy     = false;
+
+  /* 顶部日期 */
+  (function(){
+    var d = new Date();
+    var w = ['日','一','二','三','四','五','六'][d.getDay()];
+    document.getElementById('today').textContent =
+      d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 · 星期' + w;
+  })();
+
+  /* ============ 渲染结果 ============ */
+  function render(){
+    document.getElementById('lvName').textContent = data.level.name;
+    document.getElementById('lvSub').textContent  = data.level.sub;
+    document.getElementById('vDir').textContent   = DIRECTIONS[data.dirIdx].label;
+    document.getElementById('vColor').textContent = data.color;
+    document.getElementById('vNum').textContent   = data.num;
+    document.getElementById('vYi').textContent    = data.yi.join(' · ');
+    document.getElementById('vJi').textContent    = data.ji.join(' · ');
+    document.getElementById('vQuote').textContent = '「' + data.quote + '」';
+  }
+
+  /* ============ 启动星轨 ============ */
+  function spin(){
+    if(busy) return;
+    busy = true;
+    btn.disabled = true;
+    btn.textContent = '推 演 中';
+    resultEl.classList.remove('show');
+    for(var i=0;i<dirEls.length;i++) dirEls[i].classList.remove('active');
+
+    // 让目标方位转到顶部指针处
+    var target = 360 - data.dirIdx * 45;
+    var base   = rotation - (rotation % 360);
+    rotation   = base + 360 * 5 + target;
+
+    wheel.style.transform = 'rotate(' + rotation + 'deg)';
+    wheel.classList.add('spinning');
+
+    setTimeout(function(){
+      wheel.classList.remove('spinning');
+      dirEls[data.dirIdx].classList.add('active');
+      render();
+      resultEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '再 测 一 次';
+      busy = false;
+    }, 4300);
+  }
+
+  btn.addEventListener('click', spin);
+})();
+</script>
+</body>
+</html>
